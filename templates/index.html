@@ -19,52 +19,51 @@
       <a id="logo-container" href="/" class="brand-logo">
       <img src="{{ url_for('static', filename='imgs/football.png')}}" height=70 align="middle">&nbsp; Feature Dashboard
       </a>
-
-      <!-- a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a -->
     </div>
   </nav>
   <br />
 
-  <form class="col s12">
+  <form class="col s12" action="submit" method="post" enctype="multipart/form-data" name="inputform" id="inputform">
+    <fieldset> <legend>Bet Performance Calculator:</legend>
     <div class="row">
       <div class="input-field col s4">
-        <select>
+        <select id="util-type" name="util-type">
           <option value="" disabled selected>Util Type</option>
-          <option value="1">Best Odds</option>
-          <option value="2">Avg Odds</option>
-          <option value="3">Worst Odds</option>
+          <option value="BEST">Best Odds</option>
+          <option value="AVG">Avg Odds</option>
+          <option value="WORST">Worst Odds</option>
         </select>
         <label>Util Type Select</label>
       </div>
 
       <div class="input-field col s4">
-        <input placeholder="0.730" id="min_util" type="text" class="validate">
+        <input placeholder="0.730" id="min-util" name="min-util" type="text" class="validate">
         <label for="min_util">Min Util</label>
       </div>
 
       <div class="input-field col s4">
-        <input placeholder="0.798" id="max_util" type="text" class="validate">
+        <input placeholder="0.798" id="max-util" name="max-util" type="text" class="validate">
         <label for="max_util">Max Util</label>
       </div>
     </row>
     
     <div class="row">
       <div class="input-field col s4">
-        <select>
+        <select id="bet-type" name="bet-type">
           <option value="" disabled selected> Bet Type</option>
-          <option value="1">Single</option>
-          <option value="2">Accumulators</option>
+          <option value="SINGLE">Singles</option>
+          <option value="ACCUM">Accumulators</option>
         </select>
         <label>Bet Type Select</label>
       </div>
 
       <div class="input-field col s4">
-          <input placeholder="0.730" id="min_prob" type="text" class="validate">
+          <input placeholder="0.730" id="min-prob" name="min-prob" type="text" class="validate">
           <label for="min_prob">Min Prob</label>
         </div>
 
         <div class="input-field col s4">
-          <input placeholder="0.798" id="max_prob" type="text" class="validate">
+          <input placeholder="0.798" id="max-prob" name="max-prob" type="text" class="validate">
           <label for="max_prob">Max Prob</label>
         </div>
       </row>
@@ -76,8 +75,31 @@
         </button>
       </div>
     </div>
+  </fieldset>
   </form>
 
+  <br />
+  <br />
+  <h5>Example Settings</h5>
+  <table class="highlight centered">
+    <thead>
+      <tr>
+        <th data-field="bet-type">Bet Type</th>
+        <th data-field="util-type">Util Type</th>
+        <th data-field="prob-min">Prob Min</th>
+        <th data-field="prob-max">Prob Max</th>
+        <th data-field="util-min">Util Min</th>
+        <th data-field="util-max">Util Max</th>
+        <th data-field="gains">Gains</th>
+        <th data-field="gains">Total Wins</th>
+        <th data-field="gains">Total Losses</th>
+      </tr>
+    </thead>
+
+   <tbody>
+     <tr><td>Single</td><td>WORST</td><td>0.737</td><td>0.765</td><td>-0.031</td><td>0.082</td><td>3.23</td><td>150</td><td>30</td>
+     <tr><td>Accum</td><td>BEST</td><td>0.737</td><td>0.807</td><td>-0.012</td><td>0.087</td><td>3.82</td><td>348</td><td>75</td></tr>
+  </div>
 
   <script src="{{ url_for('static', filename='js/jquery-3.1.0.min.js')}}"></script>
   <script src="{{ url_for('static', filename='js/materialize.js')}}"></script>

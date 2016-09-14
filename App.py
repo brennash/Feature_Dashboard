@@ -17,6 +17,9 @@ import csv
 import logging
 import datetime
 import MySQLdb
+import sqlalchemy
+from sqlalchemy import text
+from sqlalchemy import exc
 from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
@@ -57,33 +60,90 @@ def submit():
 
 def getValues(utilType, betType, minProb, maxProb, minUtil, maxUtil):
 	try:
-		db = MySQLdb.connect(host="localhost", user='USERNAME', passwd='PASSWD', db='DATABASE')
-		cursor = db.cursor()
-		tableName = "Features"
-		if betType == 'Single':
-			sql =  'SELECT * FROM Features WHERE '
-			if utilType == 'BEST':
-				sql += '(ProbWin - (1.0/BestOdds)) >= {0} AND '.format(minUtil)
-				sql += '(ProbWin - (1.0/BestOdds)) <= {0} AND '.format(maxUtil)
-			elif utilType == 'AVG':
-				sql += '(ProbWin - (1.0/AvgOdds)) >= {0} AND '.format(minUtil)
-				sql += '(ProbWin - (1.0/AvgOdds)) <= {0} AND '.format(maxUtil)
-			elif utilType == 'WORST':
-				sql += '(ProbWin - (1.0/WorstOdds)) >= {0} AND '.format(minUtil)
-				sql += '(ProbWin - (1.0/WorstOdds)) <= {0} AND '.format(maxUtil)
-			sql += 'ProbWin >= {0} AND '.format(minProb)
-			sql += 'ProbWin <= {0};'.format(maxProb)
-		query = text(sql)
-		resultSet = self.db.execute(query, tableName=tableName)	
+		if betType == 'SINGLE':
+			sql = getSingleSQL(utilType, minProb, maxProb, minUtil, maxUtil)
+		else:
+			sql = getAccumSQL(utilType, minProb, maxProb, minUtil, maxUtil)
+
+		print sql
+
+		engine = sqlalchemy.create_engine("mysql://leaguepredict:leaguepredict@localhost/leaguepredict")
+		db = engine.connect()
+
+		resultSet = db.execute(sql, tableName='Features')
 		rows = resultSet.fetchall()
-		for row in rows:
-			print row
-		cursor.close()
 		db.close()
-	except MySQLdb.Error as e:			
+
+		xList = []
+		yList = []
+		total = 0.0
+
+		for row in rows:
+			batchNum     = row[0]
+			seasonCode   = row[1]
+			result       = row[2]
+			fixtureDate  = row[3]
+			worstOdds    = row[4]
+			numFixtures  = row[5]
+
+			xList.append(fixtureDate)
+			if result > 0.0:
+				total += worstOdds - 1.0
+			else:
+				total -= 1.0
+			yList.append(total)
+
+		output = ''
+		for index, xValue in enumerate(xList):
+			yValue = yList[index]
+			output += '\t{'
+			output += 'x:"{0}", y:{1}'.format(xValue, yValue)
+			output += '},\n'
+		output = output[:-2]
+
+		print output
+		return output
+
+	except exc.SQLAlchemyError, err:
 		print 'Error - {0}'.format( str(e) )
 
 	# { x : "Jul 2016", y : 6 },
+
+def getSingleSQL(utilType, minProb, maxProb, minUtil, maxUtil):
+
+	if utilType == 'BEST':
+		utilText = 'BestOdds'
+	elif utilType == 'WORST':
+		utilText = 'WorstOdds'
+	else:
+		utilText = 'AvgOdds'
+
+	sql =  'SELECT BatchNum, SeasonCode, Result, DATE(FixtureDate), WorstOdds, 1 FROM Features WHERE '
+	sql += 'ProbWin >= {0} AND '.format(minProb)
+	sql += 'ProbWin <= {0} AND '.format(maxProb)
+	sql += '(ProbWin - (1.0/{0})) >= {1} AND '.format(utilText, minUtil)
+	sql += '(ProbWin - (1.0/{0})) <= {1} '.format(utilText, maxUtil)
+	sql += 'ORDER BY FixtureDate ASC;'
+	return sql
+
+
+def getAccumSQL(utilType, minProb, maxProb, minUtil, maxUtil):
+
+	if utilType == 'BEST':
+		utilText = 'BestOdds'
+	elif utilType == 'WORST':
+		utilText = 'WorstOdds'
+	else:
+		utilText = 'AvgOdds'
+
+	sql =  'SELECT BatchNum, SeasonCode, MIN(Result), MIN(DATE(FixtureDate)) AS FixtureDate, '
+	sql += 'EXP(SUM(LOG(ABS(worstOdds)))) AS WorstOdds, COUNT(*) FROM Features WHERE '
+	sql += 'ProbWin >= {0} AND '.format(minProb)
+	sql += 'ProbWin <= {0} AND '.format(maxProb)
+	sql += '(ProbWin - (1.0/{0})) >= {1} AND '.format(utilText, minUtil)
+	sql += '(ProbWin - (1.0/{0})) <= {1} '.format(utilText, maxUtil)
+	sql += 'GROUP BY BatchNum, SeasonCode ORDER BY FixtureDate ASC;'
+	return sql
 
 if __name__ == '__main__':
 	handler = RotatingFileHandler('/home/ubuntu/Feature_Dashboard/log/application.log', maxBytes=10000, backupCount=3)
