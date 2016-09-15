@@ -8,6 +8,10 @@
   <link rel="shortcut icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link href="{{ url_for('static', filename='css/materialize.css')}}" type="text/css" rel="stylesheet" media="screen,projection"/ >
+  <link href="{{ url_for('static', filename='css/nv.d3.css')}}" rel="stylesheet" type="text/css">
+  <script src="{{ url_for('static', filename='js/d3.v3.min.js')}}" charset="utf-8"></script>
+  <script src="{{ url_for('static', filename='js/nv.d3.js')}}"></script>
+  <script src="{{ url_for('static', filename='js/stream_layers.js')}}"></script>
 </head>
 
 <body>
@@ -21,22 +25,21 @@
   </nav>
   <br />
 
-  <h5>Cumulative Gains</h5>
 
   <!--- BARCHART OF CUMULATIVE GAINS --->
   <div class="container" width="80%">
     <h5>Cumulative Gains</h5>
-    <p><i>Listing of the cumulative gains.</i></p>
+    <p><i>Listing of the cumulative gains over time.</i></p>
     <br />
-    <div id="cumulative_gains_chart" style="height: 300px;"><svg></svg></div>
+    <div id="cumulative_gains_chart" style="height: 300px; width: 800px;"><svg></svg></div>
   </div>
   <br/>
 
   <script>
     var chart = nv.models.multiBarChart()
-      .reduceXTicks(false)
+      .reduceXTicks(true)
       .rotateLabels(30)
-      .showControls(true)
+      .showControls(false)
       .stacked(true)
       .tooltip(function(key, x, y, e, graph) {
           return '<font size="-2">' + key + '</font>' +
@@ -45,8 +48,8 @@
       .groupSpacing(0.1);
       d3.select('#cumulative_gains_chart svg').datum([
       {
-        key: "Cumulative Gains",
-        color: "#CC4400",
+        key: "Cumulative Gains ({{ betType }})",
+        color: "#FF0000",
         values:
         [      
 {{ values | safe}}

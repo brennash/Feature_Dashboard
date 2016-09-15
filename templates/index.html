@@ -8,6 +8,7 @@
   <link rel="shortcut icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link href="{{ url_for('static', filename='css/materialize.css')}}" type="text/css" rel="stylesheet" media="screen,projection"/ >
+  <link href="{{ url_for('static', filename='css/nv.d3.css')}}" rel="stylesheet" type="text/css">
 </head>
 
 
@@ -25,6 +26,30 @@
 
   <form class="col s12" action="submit" method="post" enctype="multipart/form-data" name="inputform" id="inputform">
     <fieldset> <legend>Bet Performance Calculator:</legend>
+
+    <div class="row">
+      <div class="input-field col s4">
+        <select id="bet-type" name="bet-type">
+          <option value="" disabled selected> Bet Type</option>
+          <option value="SINGLE">Singles</option>
+          <option value="ACCUM">Accumulators</option>
+        </select>
+        <label>Bet Type Select</label>
+      </div>
+
+      <div class="input-field col s4">
+        <input placeholder="Enter value 0.0 to 1.0" id="min-prob" name="min-prob" type="text" class="validate">
+        <label for="min_prob">Min Prob</label>
+      </div>
+
+      <div class="input-field col s4">
+        <input placeholder="Enter value 0.0 to 1.0" id="max-prob" name="max-prob" type="text" class="validate">
+        <label for="max_prob">Max Prob</label>
+      </div>
+    </row>
+
+
+
     <div class="row">
       <div class="input-field col s4">
         <select id="util-type" name="util-type">
@@ -37,37 +62,16 @@
       </div>
 
       <div class="input-field col s4">
-        <input placeholder="0.730" id="min-util" name="min-util" type="text" class="validate">
+        <input placeholder="Enter value -0.2 to 0.2" id="min-util" name="min-util" type="text" class="validate">
         <label for="min_util">Min Util</label>
       </div>
 
       <div class="input-field col s4">
-        <input placeholder="0.798" id="max-util" name="max-util" type="text" class="validate">
+        <input placeholder="Enter value -0.2 to 0.2" id="max-util" name="max-util" type="text" class="validate">
         <label for="max_util">Max Util</label>
       </div>
     </row>
     
-    <div class="row">
-      <div class="input-field col s4">
-        <select id="bet-type" name="bet-type">
-          <option value="" disabled selected> Bet Type</option>
-          <option value="SINGLE">Singles</option>
-          <option value="ACCUM">Accumulators</option>
-        </select>
-        <label>Bet Type Select</label>
-      </div>
-
-      <div class="input-field col s4">
-          <input placeholder="0.730" id="min-prob" name="min-prob" type="text" class="validate">
-          <label for="min_prob">Min Prob</label>
-        </div>
-
-        <div class="input-field col s4">
-          <input placeholder="0.798" id="max-prob" name="max-prob" type="text" class="validate">
-          <label for="max_prob">Max Prob</label>
-        </div>
-      </row>
-
     <div class="row">
       <div class="input-field col s4">
         <button class="btn red waves-effect waves-light" type="submit" name="action">Submit

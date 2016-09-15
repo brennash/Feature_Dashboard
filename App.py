@@ -22,7 +22,7 @@ from sqlalchemy import text
 from sqlalchemy import exc
 from logging.handlers import RotatingFileHandler
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
 app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
 
 @app.route('/')
@@ -42,7 +42,6 @@ def submit():
 		app.logger.info('%s - Analytics Request GET REQUEST submit request from %s',timeStamp, reqIPAddr)
 		return render_template('index.html')
 	elif request.method == 'POST':
-		print "SUBMIT POST "
 		timeStamp = datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
 		reqIPAddr = request.remote_addr
 		app.logger.info('%s - Analytics Request POST REQUEST submit request from %s',timeStamp, reqIPAddr)
@@ -54,60 +53,101 @@ def submit():
 		minUtil  = float(request.form.get('min-util'))
 		maxUtil  = float(request.form.get('max-util'))
 
-		values = getValues(utilType, betType, minProb, maxProb, minUtil, maxUtil)
+		dataSet = getData(utilType, betType, minProb, maxProb, minUtil, maxUtil)
+		values = getValues(dataSet)
+		lossStreak, winStreak = getStreak(dataSet)
+		print 'WIN STREAK: {0}, LOSS STREAK: {1}'.format(winStreak, lossStreak)
 
-		return render_template('gains.html', values=values)
+		return render_template('gains.html', values=values, betType=betType, lossStreak=lossStreak, winStreak=winStreak)
 
-def getValues(utilType, betType, minProb, maxProb, minUtil, maxUtil):
+def getData(utilType, betType, minProb, maxProb, minUtil, maxUtil):
+	""" Function with queries the database and returns a list of lists giving the
+		data breakdowns for either single or accumulator bets.
+	"""
+	if betType == 'SINGLE':
+		sql = getSingleSQL(utilType, minProb, maxProb, minUtil, maxUtil)
+	else:
+		sql = getAccumSQL(utilType, minProb, maxProb, minUtil, maxUtil)
+
 	try:
-		if betType == 'SINGLE':
-			sql = getSingleSQL(utilType, minProb, maxProb, minUtil, maxUtil)
-		else:
-			sql = getAccumSQL(utilType, minProb, maxProb, minUtil, maxUtil)
-
-		print sql
-
 		engine = sqlalchemy.create_engine("mysql://leaguepredict:leaguepredict@localhost/leaguepredict")
 		db = engine.connect()
-
 		resultSet = db.execute(sql, tableName='Features')
 		rows = resultSet.fetchall()
 		db.close()
-
-		xList = []
-		yList = []
-		total = 0.0
-
-		for row in rows:
-			batchNum     = row[0]
-			seasonCode   = row[1]
-			result       = row[2]
-			fixtureDate  = row[3]
-			worstOdds    = row[4]
-			numFixtures  = row[5]
-
-			xList.append(fixtureDate)
-			if result > 0.0:
-				total += worstOdds - 1.0
-			else:
-				total -= 1.0
-			yList.append(total)
-
-		output = ''
-		for index, xValue in enumerate(xList):
-			yValue = yList[index]
-			output += '\t{'
-			output += 'x:"{0}", y:{1}'.format(xValue, yValue)
-			output += '},\n'
-		output = output[:-2]
-
-		print output
-		return output
-
+		return rows
 	except exc.SQLAlchemyError, err:
 		print 'Error - {0}'.format( str(e) )
+		return None
 
-	# { x : "Jul 2016", y : 6 },
+def getValues(dataSet):
+	""" Parses the data returned from the database and constructs a 
+	    list of values for the cumulative gains over all the seasons.
+	"""
+	xList = []
+	yList = []
+	total = 0.0
+
+	for row in dataSet:
+		batchNum     = row[0]
+		seasonCode   = row[1]
+		result       = row[2]
+		fixtureDate  = row[3]
+		worstOdds    = row[4]
+		numFixtures  = row[5]
+
+		xList.append(fixtureDate)
+		if result > 0.0:
+			total += worstOdds - 1.0
+		else:
+			total -= 1.0
+		yList.append(total)
+
+	output = ''
+	for index, xValue in enumerate(xList):
+		yValue = yList[index]
+		output += '\t{'
+		output += 'x:"{0}", y:{1}'.format(xValue, yValue)
+		output += '},\n'
+	output = output[:-2]
+	return output
+
+def getStreak(dataSet):
+	winStreak  = 0
+	lossStreak = 0
+	bestWinStreak  = 0
+	bestLossStreak = 0
+	prevResult = None
+
+	for row in dataSet:
+		batchNum     = row[0]
+		seasonCode   = row[1]
+		result       = row[2]
+		fixtureDate  = row[3]
+		worstOdds    = row[4]
+		numFixtures  = row[5]
+
+		if prevResult is None:
+			prevResult = result
+		elif prevResult == result:
+			if result > 0:
+				winStreak += 1
+			else:
+				lossStreak += 1
+		elif prevResult != result:
+			if result > 0:
+				if lossStreak > bestLossStreak:
+					bestLossStreak = lossStreak
+				lossStreak = 0
+				winStreak = 0
+			else:
+				if winStreak > bestWinStreak:
+					bestWinStreak = winStreak
+				winStreak = 0
+				lossStreak = 0
+
+	return bestWinStreak, bestLossStreak
+
 
 def getSingleSQL(utilType, minProb, maxProb, minUtil, maxUtil):
 
