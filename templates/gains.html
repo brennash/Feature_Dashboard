@@ -35,6 +35,51 @@
   </div>
   <br/>
 
+  <fieldset>
+    <legend>Summary</legend>
+    <table class="highlight centered">
+      <tr>
+        <td>Number Fixtures:</td>
+        <td>{{features|length}}</td>
+      </tr>
+      <tr>
+        <td>Number Wins:</td>
+        <td>{{winTotal}}</td>
+      </tr>
+      <tr>
+        <td>Number Losses:</td>
+        <td>{{lossTotal}}</td>
+      </tr>
+      <tr>
+        <td>Total Gains:</td>
+        <td>{{gainTotal}}</td>
+      </tr>
+      <tr>
+        <td>Winning Streak:</td>
+        <td>{{winStreak}} from {{startDateWin}} to {{endDateWin}}</td>
+      </tr>
+      <tr>
+        <td>Losing Streak:</td>
+        <td>{{lossStreak}} from {{startDateLoss}}  to {{endDateLoss}}</td>
+      </tr>
+    </table>
+  </fieldset>
+
+  <fieldset>
+    <legend>Fixtures</legend>
+    <table class="highlight centered">
+      {% for row in features %}
+        <tr>
+          <td>{{row[0]}}<td>
+          <td>{{row[1]}}<td>
+          <td>{{row[2]}}<td>
+          <td>{{row[3]}}<td>
+          <td>{{row[4]}}<td>
+        </tr>
+      {% endfor %}
+    </table>
+  </fieldset>
+
   <script>
     var chart = nv.models.multiBarChart()
       .reduceXTicks(true)

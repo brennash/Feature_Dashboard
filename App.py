@@ -55,10 +55,24 @@ def submit():
 
 		dataSet = getData(utilType, betType, minProb, maxProb, minUtil, maxUtil)
 		values = getValues(dataSet)
-		lossStreak, winStreak = getStreak(dataSet)
-		print 'WIN STREAK: {0}, LOSS STREAK: {1}'.format(winStreak, lossStreak)
 
-		return render_template('gains.html', values=values, betType=betType, lossStreak=lossStreak, winStreak=winStreak)
+		gainTotal, winTotal, lossTotal = getTotals(dataSet)
+		winStreak, startDateWin, endDateWin = getRun(1, dataSet)
+		lossStreak, startDateLoss, endDateLoss = getRun(0, dataSet)
+
+		return render_template('gains.html', 
+			values=values,
+			features=dataSet,
+			betType=betType,
+			gainTotal=gainTotal,
+			winTotal=winTotal,
+			lossTotal=lossTotal,
+			lossStreak=lossStreak,
+			startDateLoss=startDateLoss, 
+			startDateWin=startDateWin, 
+			endDateLoss=endDateLoss, 
+			endDateWin=endDateWin, 
+			winStreak=winStreak)
 
 def getData(utilType, betType, minProb, maxProb, minUtil, maxUtil):
 	""" Function with queries the database and returns a list of lists giving the
@@ -112,12 +126,39 @@ def getValues(dataSet):
 	output = output[:-2]
 	return output
 
-def getStreak(dataSet):
-	winStreak  = 0
-	lossStreak = 0
-	bestWinStreak  = 0
-	bestLossStreak = 0
-	prevResult = None
+def getRun(value, dataSet):
+	prev     = None
+	run      = 0
+	bestRun  = 0
+	startRun  = None
+	endRun    = None
+	bestStart = None
+	bestEnd   = None
+
+	for row in dataSet:
+		result = row[2]
+		fixtureDate  = row[3]
+
+		if result == prev and result == value:
+			run += 1
+			if run > bestRun:
+				bestRun = run
+				bestStart = startRun
+				bestEnd   = fixtureDate
+		else:
+			run = 0
+			startRun = fixtureDate
+		prev = result
+
+	return bestRun, bestStart, bestEnd
+
+def getTotals(dataSet):
+	""" Parses the data returned from the database and constructs a 
+	    list of values for the cumulative gains over all the seasons.
+	"""
+	totalWins   = 0
+	totalLosses = 0
+	totalGains  = 0.0
 
 	for row in dataSet:
 		batchNum     = row[0]
@@ -126,28 +167,13 @@ def getStreak(dataSet):
 		fixtureDate  = row[3]
 		worstOdds    = row[4]
 		numFixtures  = row[5]
-
-		if prevResult is None:
-			prevResult = result
-		elif prevResult == result:
-			if result > 0:
-				winStreak += 1
-			else:
-				lossStreak += 1
-		elif prevResult != result:
-			if result > 0:
-				if lossStreak > bestLossStreak:
-					bestLossStreak = lossStreak
-				lossStreak = 0
-				winStreak = 0
-			else:
-				if winStreak > bestWinStreak:
-					bestWinStreak = winStreak
-				winStreak = 0
-				lossStreak = 0
-
-	return bestWinStreak, bestLossStreak
-
+		if result == 1:
+			totalWins  += 1
+			totalGains += (worstOdds-1.0)
+		else:
+			totalLosses += 1
+			totalGains  -= 1.0
+	return totalGains, totalWins, totalLosses
 
 def getSingleSQL(utilType, minProb, maxProb, minUtil, maxUtil):
 
