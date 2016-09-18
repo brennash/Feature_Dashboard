@@ -68,15 +68,38 @@
   <fieldset>
     <legend>Fixtures</legend>
     <table class="highlight centered">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Season</th>
+          <th>Week No.</th>
+          <th>Result</th>
+          <th>Home Team</th>
+          <th>Home FT</th>
+          <th>Away FT</th>
+          <th>Away Team</th>
+          <th>Odds</th>
+        </tr>
+      </thead>
+      <tbody>
       {% for row in features %}
         <tr>
-          <td>{{row[0]}}<td>
-          <td>{{row[1]}}<td>
-          <td>{{row[2]}}<td>
-          <td>{{row[3]}}<td>
-          <td>{{row[4]}}<td>
+          <td>{{row[0]}}</td>
+          <td>{{row[1]}}</td>
+          <td>{{row[2]}}</td>
+          {% if row[3] == 1 %}
+            <td>WIN</td>
+          {% else %}
+            <td>LOSS</td>
+          {% endif %}
+          <td>{{row[4]}}</td>
+          <td>{{row[5]}}</td>
+          <td>{{row[6]}}</td>
+          <td>{{row[7]}}</td>
+          <td>{{row[8]}}</td>
         </tr>
       {% endfor %}
+      </tbody>
     </table>
   </fieldset>
 

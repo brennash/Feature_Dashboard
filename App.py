@@ -56,6 +56,7 @@ def submit():
 		maxUtil  = float(request.form.get('max-util'))
 
 		dataSet = getData(utilType, betType, minProb, maxProb, minUtil, maxUtil)
+		features = getFeatures(utilType, betType, minProb, maxProb, minUtil, maxUtil)
 		values = getValues(dataSet)
 
 		gainTotal, winTotal, lossTotal = getTotals(dataSet)
@@ -64,7 +65,7 @@ def submit():
 
 		return render_template('gains.html', 
 			values=values,
-			features=dataSet,
+			features=features,
 			betType=betType,
 			gainTotal=gainTotal,
 			winTotal=winTotal,
@@ -85,6 +86,19 @@ def getData(utilType, betType, minProb, maxProb, minUtil, maxUtil):
 	else:
 		sql = getAccumSQL(utilType, minProb, maxProb, minUtil, maxUtil)
 
+	try:
+		engine = sqlalchemy.create_engine("mysql://leaguepredict:leaguepredict@localhost/leaguepredict")
+		db = engine.connect()
+		resultSet = db.execute(sql, tableName='Features')
+		rows = resultSet.fetchall()
+		db.close()
+		return rows
+	except exc.SQLAlchemyError, err:
+		print 'Error - {0}'.format( str(e) )
+		return None
+
+def getFeatures(utilType, betType, minProb, maxProb, minUtil, maxUtil):
+	sql = getFeatureSQL(utilType, minProb, maxProb, minUtil, maxUtil)
 	try:
 		engine = sqlalchemy.create_engine("mysql://leaguepredict:leaguepredict@localhost/leaguepredict")
 		db = engine.connect()
@@ -194,6 +208,22 @@ def getSingleSQL(utilType, minProb, maxProb, minUtil, maxUtil):
 	sql += 'ORDER BY FixtureDate ASC;'
 	return sql
 
+def getFeatureSQL(utilType, minProb, maxProb, minUtil, maxUtil):
+
+	if utilType == 'BEST':
+		utilText = 'BestOdds'
+	elif utilType == 'WORST':
+		utilText = 'WorstOdds'
+	else:
+		utilText = 'AvgOdds'
+
+	sql =  'SELECT DATE(FixtureDate), SeasonCode, BatchNum, Result, HomeTeam, HomeFT, AwayFT, AwayTeam, WorstOdds FROM Features WHERE '
+	sql += 'ProbWin >= {0} AND '.format(minProb)
+	sql += 'ProbWin <= {0} AND '.format(maxProb)
+	sql += '(ProbWin - (1.0/{0})) >= {1} AND '.format(utilText, minUtil)
+	sql += '(ProbWin - (1.0/{0})) <= {1} '.format(utilText, maxUtil)
+	sql += 'ORDER BY FixtureDate ASC;'
+	return sql
 
 def getAccumSQL(utilType, minProb, maxProb, minUtil, maxUtil):
 
