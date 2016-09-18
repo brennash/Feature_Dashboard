@@ -12,9 +12,9 @@ from optparse import OptionParser
 class InsertData:
 
 	def __init__(self, inputFilename):
-		self.database    = 'DATABASE'
-		self.username    = 'USERNAME'
-		self.password    = 'PASSWORD'
+		self.database    = 'leaguepredict'
+		self.username    = 'leaguepredict'
+		self.password    = 'leaguepredict'
 		self.db          = None
 		self.cursor      = None
 
@@ -38,10 +38,10 @@ class InsertData:
 				seasonCode  = row[3]
 				leagueCode  = row[4]
 				fixtureDate = row[5]
-				homeTeam    = row[6]
+				homeTeam    = self.cleanText(row[6])
 				homeFT      = row[7]
 				awayFT      = row[8]
-				awayTeam    = row[9]
+				awayTeam    = self.cleanText(row[9])
 				bestOdds    = row[10]
 				worstOdds   = row[11]
 				avgOdds     = row[12]
@@ -67,11 +67,13 @@ class InsertData:
 					self.cursor.execute(sql);
 		                except MySQLdb.Error as e:
                 		        print 'Error Inserting - {0}'.format( str(e) )
-
-				print 'Inserted {0} lines'.format(index)
 			index += 1
+		print 'Inserted {0} lines'.format(index)
 		self.cursor.execute('COMMIT;')
 
+	def cleanText(self, inputText):
+		result = inputText.replace("'","''")
+		return result
 
 	def initConnection(self):
 		try:

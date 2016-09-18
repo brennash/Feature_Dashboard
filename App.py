@@ -1,9 +1,11 @@
-#########################################################################################
-# The Feature Dashboard Python flask application. 					#
-#											#
-# Version: 0.0 										#
-# Date:    20160012									#
-#########################################################################################
+#####################################################################
+# The Feature Dashboard Python flask application. This application	#
+# is used to display the potential gains accrued by a predictive    #
+# model of top-flight European football leagues. 					#
+#																	#
+# Version: 0.1														#
+# Date:    20160912													#
+#####################################################################
 
 #!/usr/bin/env python
 from flask import render_template
